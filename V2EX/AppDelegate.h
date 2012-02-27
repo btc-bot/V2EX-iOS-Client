@@ -1,8 +1,8 @@
 //
 //  AppDelegate.h
-//  V2EX
+//  V2ex
 //
-//  Created by 晓萌 王 on 12-2-28.
+//  Created by 晓萌 王 on 12-2-23.
 //  Copyright (c) 2012年 __MyCompanyName__. All rights reserved.
 //
 
@@ -13,7 +13,6 @@
 @interface AppDelegate : UIResponder <UIApplicationDelegate>
 
 @property (strong, nonatomic) UIWindow *window;
-
 @property (strong, nonatomic) ViewController *viewController;
-
+@property (strong, nonatomic) UINavigationController *navController;
 @end
