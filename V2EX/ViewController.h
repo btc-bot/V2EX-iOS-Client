@@ -10,13 +10,23 @@
 #import "ASIHTTPRequest.h"
 #import "Topic.h"
 #import "MBProgressHUD.h"
+#import "EGORefreshTableHeaderView.h"
 
 
-@interface ViewController : UIViewController <UITableViewDataSource,UITableViewDelegate>
+@interface ViewController : UIViewController <UITableViewDataSource,UITableViewDelegate,EGORefreshTableHeaderDelegate>
 
 @property (strong, nonatomic) NSMutableArray *topics;
 @property (strong, nonatomic) MBProgressHUD *HUD;
 @property (strong, nonatomic) IBOutlet UITableView *tableView;
+
+@property (strong, nonatomic) EGORefreshTableHeaderView *refreshHeaderView;
+
+//  Reloading var should really be your tableviews datasource
+//  Putting it here for demo purposes 
+@property (assign, nonatomic)BOOL reloading;
+
+- (void)reloadTableViewDataSource;
+- (void)doneLoadingTableViewData;
 
 - (IBAction)reloadTableView:(id)sender;
 - (void)avatarImgTapped:(id)sender;

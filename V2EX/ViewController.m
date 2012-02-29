@@ -11,12 +11,15 @@
 #import "Topic.h"
 #import "TitleViewCell.h"
 #import "ContentViewController.h"
+#import "UIImageView+WebCache.h"
 
 @implementation ViewController
 
 @synthesize topics = _topics;
 @synthesize tableView = _tableView;
 @synthesize HUD = _HUD;
+@synthesize refreshHeaderView;
+@synthesize reloading;
 
 - (void)viewDidLoad
 {
@@ -26,6 +29,18 @@
     
     UIBarButtonItem *leftButton = [[UIBarButtonItem alloc]initWithTitle:@"刷新" style:UIBarButtonItemStyleBordered target:self action:@selector(reloadTableView:)];
     self.navigationItem.leftBarButtonItem = leftButton;
+    
+    if (refreshHeaderView == nil) 
+    {
+        // 创建下拉视图
+		EGORefreshTableHeaderView *view = [[EGORefreshTableHeaderView alloc] initWithFrame:CGRectMake(0.0f, 0.0f - self.tableView.bounds.size.height, self.view.frame.size.width, self.tableView.bounds.size.height)];
+		view.delegate = self;
+		[self.tableView addSubview:view];
+		refreshHeaderView = view;
+	}
+	
+	// 更新时间
+	[refreshHeaderView refreshLastUpdatedDate];
 }
 
 - (void)viewDidUnload
@@ -33,6 +48,7 @@
     [self setTableView:nil];
     self.topics = nil;
     self.HUD = nil;
+    self.refreshHeaderView = nil;
     [super viewDidUnload];
     // Release any retained subviews of the main view.
 }
@@ -97,16 +113,21 @@
     
     //加载用户avatar图片:因为v2ex早期用mobileMe做图片路径,现在换upyun了,所有很多用户头像还没转换
     //另一个解决方案采用memberId来查member中的avatar路径需要多次请求json
-    NSString *MyURL = [NSString stringWithFormat:@"http://v2excdn.b0.upaiyun.com/avatars/normal/%@.png",topic.userNameId];
+    NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"http://v2excdn.b0.upaiyun.com/avatars/normal/%@.png",topic.userNameId]];
     cell.avatarImgView.tag = [topic.userNameId intValue];
-    NSData *imgData = [NSData dataWithContentsOfURL:[NSURL URLWithString:MyURL]];
+    /*
+    NSData *imgData = [NSData dataWithContentsOfURL:[NSURL URLWithString:avatarURL]];
     if (imgData != NULL) {
         UIImage *image = [UIImage imageWithData:imgData];
         cell.avatarImgView.image = image;
     }
     else {
         cell.avatarImgView.image = [UIImage imageNamed:@"avatar_normal.png"];
-    }
+    }*/
+    
+    //使用SDIMAGE异步加载图片,解决拉动UITableView卡的问题
+    [cell.avatarImgView setImageWithURL:url placeholderImage:[UIImage imageNamed:@"avatar_normal.png"]];
+    
     //给imgView添加Tap事件
     UITapGestureRecognizer *singleTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(avatarImgTapped:)];
     [cell.avatarImgView addGestureRecognizer:singleTap];
@@ -141,5 +162,56 @@
     [self.navigationController pushViewController:contentView animated:YES];
 }
 
+#pragma mark -
+#pragma mark UIScrollViewDelegate Methods
+// 刷新开始时调用
+- (void)reloadTableViewDataSource
+{
+	//  should be calling your tableviews data source model to reload
+	//  put here just for demo
+    [self reloadTableView:nil];
+	reloading = YES;
+}
+// 刷新结束时调用
+- (void)doneLoadingTableViewData
+{
+	//  model should call this when its done loading
+	reloading = NO;
+	[refreshHeaderView egoRefreshScrollViewDataSourceDidFinishedLoading:self.tableView];
+}
 
+// 页面滚动时回调
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView
+{	
+    //NSLog(@"scrollViewDidScroll");
+	[refreshHeaderView egoRefreshScrollViewDidScroll:scrollView];
+}
+// 滚动结束时回调
+- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate
+{	
+    //NSLog(@"scrollViewDidEndDragging");
+	[refreshHeaderView egoRefreshScrollViewDidEndDragging:scrollView];
+}
+
+#pragma mark -
+#pragma mark EGORefreshTableHeaderDelegate Methods
+// 开始刷新时回调
+- (void)egoRefreshTableHeaderDidTriggerRefresh:(EGORefreshTableHeaderView*)view
+{	
+    NSLog(@"egoRefreshTableHeaderDidTriggerRefresh");
+	[self reloadTableViewDataSource];
+	[self performSelector:@selector(doneLoadingTableViewData) withObject:nil afterDelay:2.0];
+}
+// 下拉时回调
+- (BOOL)egoRefreshTableHeaderDataSourceIsLoading:(EGORefreshTableHeaderView*)view
+{	
+    NSLog(@"egoRefreshTableHeaderDataSourceIsLoading");
+	return reloading; // should return if data source model is reloading
+}
+// 请求上次更新时间时调用
+- (NSDate*)egoRefreshTableHeaderDataSourceLastUpdated:(EGORefreshTableHeaderView*)view
+{	
+    NSLog(@"egoRefreshTableHeaderDataSourceLastUpdated");
+	return [NSDate date]; // should return date data source was last changed
+}
 @end
