@@ -57,7 +57,13 @@
 {
     return (interfaceOrientation != UIInterfaceOrientationPortraitUpsideDown);
 }
+//获取会员详细信息(未实现)
+- (void)getMemberInfo:(NSString *)userName{
+    NSString *url = [NSString stringWithFormat:@"http://www.v2ex.com/api/members/show.json?username=%@",userName];
+    //NSLog(@"username is %@",url);
+}
 
+//获取最新话题内容
 - (IBAction)reloadTableView:(id)sender {
     NSURL *url = [NSURL URLWithString:@"http://www.v2ex.com/api/topics/latest.json"];
     ASIHTTPRequest *request = [ASIHTTPRequest requestWithURL:url];
@@ -115,6 +121,8 @@
     //另一个解决方案采用memberId来查member中的avatar路径需要多次请求json
     NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"http://v2excdn.b0.upaiyun.com/avatars/normal/%@.png",topic.userNameId]];
     cell.avatarImgView.tag = [topic.userNameId intValue];
+    
+    [self getMemberInfo:topic.userName];
     /*
     NSData *imgData = [NSData dataWithContentsOfURL:[NSURL URLWithString:avatarURL]];
     if (imgData != NULL) {
