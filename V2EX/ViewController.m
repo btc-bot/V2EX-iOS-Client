@@ -60,7 +60,7 @@
 //获取会员详细信息(未实现)
 - (void)getMemberInfo:(NSString *)userName{
     NSString *url = [NSString stringWithFormat:@"http://www.v2ex.com/api/members/show.json?username=%@",userName];
-    //NSLog(@"username is %@",url);
+    NSLog(@"username is %@",url);
 }
 
 //获取最新话题内容
